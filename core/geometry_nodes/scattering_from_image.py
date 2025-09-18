@@ -111,7 +111,7 @@ def scattering_from_image_node_group():
 	collection_info.name = "Collection Info"
 	collection_info.transform_space = 'ORIGINAL'
 	# Separate Children
-	collection_info.inputs[1].default_value = True
+	collection_info.inputs[1].default_value = False
 	# Reset Children
 	collection_info.inputs[2].default_value = True
 	

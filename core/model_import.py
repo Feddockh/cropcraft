@@ -14,6 +14,7 @@ import bpy
 from contextlib import contextmanager
 import os
 import sys
+from pathlib import Path
 
 
 @contextmanager
@@ -45,14 +46,29 @@ def disable_outputs():
 
 def obj_import(filepath: str):
     objects_before = set(bpy.context.scene.objects)
+    path = Path(filepath)
+    ext = path.suffix.lower()
 
     with disable_outputs():
-        bpy.ops.wm.obj_import(
-            filepath=filepath,
-            up_axis="Z",
-            forward_axis="Y",
-            use_split_objects=False,
-        )
+        if ext in (".usd", ".usda", ".usdc", ".usdz"):
+            bpy.ops.wm.usd_import(
+                filepath=str(path),
+                import_meshes=True,
+                import_materials=True,
+                import_usd_preview=True,
+                read_mesh_uvs=True,
+                read_mesh_colors=True,
+                import_subdiv=True,
+            )
+        elif ext == ".obj":
+            bpy.ops.wm.obj_import(
+                filepath=str(path),
+                up_axis="Z",
+                forward_axis="Y",
+                use_split_objects=False,
+            )
+        else:
+            raise ValueError(f"Unsupported file extension: {ext}")
 
     imported_objects = set(bpy.context.scene.objects) - objects_before
     for object in imported_objects:
