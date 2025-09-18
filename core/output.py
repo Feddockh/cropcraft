@@ -45,6 +45,21 @@ class GazeboModel:
         model.generate_sdf()
         model.generate_config()
 
+
+@dataclass
+class USDFile:
+    filename: str = None
+
+    def export(self, output_dir: str, field: config.Field):
+        filepath = os.path.join(output_dir, self.filename)
+
+        bpy.ops.file.pack_all()
+        bpy.ops.wm.usd_export(
+            filepath=filepath,
+            collection="generated"
+        )
+
+
 @dataclass
 class Description:
     filename: str = None

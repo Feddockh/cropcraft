@@ -184,6 +184,15 @@ def make_gazebo_model(name: str, data: dict):
     return output
 
 
+def make_usd_file(name: str, data: dict):
+    output = output_classes.USDFile()
+    output.filename = data.get('filename')
+    if output.filename is None:
+        raise ParserError(f"Missing element 'filename' in output config '{name}'")
+
+    return output
+
+
 def make_field_description(name: str, data: dict):
     output = output_classes.Description()
     output.filename = data.get('filename')
@@ -197,6 +206,7 @@ output_builders = {
     'blender_file': make_blender_file,
     'gazebo_model': make_gazebo_model,
     'field_description': make_field_description,
+    'usd_file': make_usd_file,
 }
 
 

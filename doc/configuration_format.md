@@ -1,7 +1,7 @@
 ## Example of a configuration file
 
 ```yaml
-output_enabled: [blender, gazebo]
+output_enabled: [blender, gazebo, usd]
 output:
   blender:
     type: blender_file
@@ -9,6 +9,9 @@ output:
   gazebo:
     type: gazebo_model
     name: mixed_field
+  usd:
+    type: usd_file
+    filename: mixed_field.usd
 
 field:
   headland_width: 8.
@@ -237,10 +240,13 @@ output:
   out1:
     type: blender_file
     ...
-  out2:
-    type: gazebo_model
+  out2: 
+    type: usd_file
     ...
   out3:
+    type: gazebo_model
+    ...
+  out4:
     type: description
     ...
 ```
@@ -248,7 +254,7 @@ output:
 The `output` block contains several key/value that correspond to a name that can be referenced by
 `output_enabled` and a configuration block:
 
-* `type`: the output type. Available: `blender_file` or `gazebo_model`
+* `type`: the output type. Available: `blender_file`, `usd_file`, `gazebo_model` or `description`
 
 The other parameters of the output block depends of the `type`.
 
@@ -262,10 +268,20 @@ out1:
 
 * `filename`: file name (and optionally a relative path) of the generated blender file
 
-#### Output type `gazebo_model`
+#### Output type `usd_file`
 
 ```yaml
 out2:
+  type: usd_file
+  filename: small_field.usd
+```
+
+* `filename`: file name (and optionally a relative path) of the generated usd file. Available file extentions: `*.usd`, `*.usda`, `*.usdc` and `*.usdz`
+
+#### Output type `gazebo_model`
+
+```yaml
+out3:
   type: gazebo_model
   name: maize_field
   author: John Smith
@@ -280,7 +296,7 @@ out2:
 #### Output type `field_description`
 
 ```yaml
-out3:
+out4:
   type: field_description
   format: json
   filename: description.json
@@ -295,3 +311,4 @@ out3:
   - `.mpk` for the [MessagePack](https://msgpack.org/) format
   - `.mpk.gz` for a compressed MessagePack using gzip 
   If the extension is unknown, the JSON format is selected by default.
+
