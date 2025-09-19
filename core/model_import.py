@@ -71,9 +71,21 @@ def obj_import(filepath: str):
             raise ValueError(f"Unsupported file extension: {ext}")
 
     imported_objects = set(bpy.context.scene.objects) - objects_before
+    nb_objects = 0
     for object in imported_objects:
-        make_transparent(object)
+        # some import commands like usd_import add unwanted non-mesh object
+        if object.type != "MESH":
+            bpy.data.objects.remove(object, do_unlink=True)
+        else:
+            make_transparent(object)
+            nb_objects += 1
 
+    if nb_objects != 1:
+        print(
+            f"Warning: imported file '{filepath}' must contain only one mesh object"
+            f" (imported: {nb_objects} objects).",
+            file=sys.stderr,
+        )
 
 
 def make_transparent(obj: bpy.types.Object):
