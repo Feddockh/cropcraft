@@ -11,6 +11,7 @@
 # limitations under the License.
 
 import bpy
+from mathutils import Matrix
 from contextlib import contextmanager
 import os
 import sys
@@ -71,21 +72,73 @@ def obj_import(filepath: str):
             raise ValueError(f"Unsupported file extension: {ext}")
 
     imported_objects = set(bpy.context.scene.objects) - objects_before
-    nb_objects = 0
-    for object in imported_objects:
-        # some import commands like usd_import add unwanted non-mesh object
-        if object.type != "MESH":
-            bpy.data.objects.remove(object, do_unlink=True)
-        else:
-            make_transparent(object)
-            nb_objects += 1
 
-    if nb_objects != 1:
+    #first identify meshes, but do not delete parents yet
+    meshes = []
+    for obj in imported_objects:
+        if obj.type == "MESH":
+            make_transparent(obj)
+            meshes.append(obj)
+
+    if not meshes:
         print(
-            f"Warning: imported file '{filepath}' must contain only one mesh object"
-            f" (imported: {nb_objects} objects).",
+            f"Warning: imported file '{filepath}' did not contain mesh objects.",
             file=sys.stderr,
         )
+        return
+
+    #bake world transforms into each mesh, then clear parents
+    for obj in meshes:
+        if obj.data.users > 1:
+            obj.data = obj.data.copy()
+        M = obj.matrix_world.copy()
+        obj.data.transform(M)
+        obj.data.update()
+        obj.matrix_world = Matrix.Identity(4)
+        obj.parent = None
+
+    #delete imported non-mesh parents now that transforms are baked
+    for obj in list(imported_objects):
+        if obj.type != "MESH":
+            try:
+                bpy.data.objects.remove(obj, do_unlink=True)
+            except ReferenceError:
+                pass
+            
+
+    # join meshes into one object
+
+    # keep only meshes that actually have geometry
+    meshes = [m for m in meshes if m.data and len(m.data.vertices) > 0]
+
+    if not meshes:
+        print(f"Warning: imported file '{filepath}' did not contain usable mesh data.", file=sys.stderr)
+        return
+
+    bpy.ops.object.select_all(action='DESELECT')
+
+    for obj in meshes:
+        obj.select_set(True)
+
+    active = meshes[0]
+    bpy.context.view_layer.objects.active = active
+
+    # build a object name from the filename
+    base_name = path.stem  # file name without extension
+    merged_name = f"{base_name}"
+
+    if len(meshes) == 1:
+        active.name = merged_name
+    else:
+        # make the operator see exactly these selections
+        with bpy.context.temp_override(
+            object=active,
+            active_object=active,
+            selected_objects=meshes,
+            selected_editable_objects=meshes
+        ):
+            bpy.ops.object.join()
+        bpy.context.view_layer.objects.active.name = merged_name
 
 
 def make_transparent(obj: bpy.types.Object):
